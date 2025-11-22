@@ -53,6 +53,10 @@ export class DiscordClient {
         throw new Error("Discord Response Error");
       }
     }
+    if (!res.ok) {
+      const responseBody = await res.text();
+      throw new Error(`Discord API Error: ${res.status} ${res.statusText} - ${responseBody}`);
+    }
     return res;
   }
 
