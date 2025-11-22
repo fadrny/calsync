@@ -15,7 +15,7 @@ import { DiscordClient } from "./discord.ts";
 import { loadEnvConfig } from "./envConfig.ts";
 import { GoogleCalendarClient } from "./gcal.ts";
 
-const TWO_WEEKS = 1000 * 3600 * 24 * 7 * 2;
+const ONE_YEAR = 1000 * 3600 * 24 * 365;
 
 const envConfig = loadEnvConfig();
 const discordClient = new DiscordClient(envConfig.discord);
@@ -24,7 +24,7 @@ const gCalClient = new GoogleCalendarClient(envConfig.googleCalendar);
 const discordApplicationId = envConfig.discord.applicationId;
 const syncDateRange = {
   from: new Date(),
-  to: new Date(Date.now() + TWO_WEEKS),
+  to: new Date(Date.now() + ONE_YEAR),
 };
 
 const calendarToDiscordEvent = (
