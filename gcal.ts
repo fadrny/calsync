@@ -116,7 +116,7 @@ export class GoogleCalendarClient {
     };
   }
 
-  public async getEvents({
+public async getEvents({
     singleEvents,
     timeMax,
     timeMin,
@@ -124,42 +124,63 @@ export class GoogleCalendarClient {
     orderBy,
   }: IGetCalendarEventsParams) {
     try {
-      const calendarRequestParams: Record<string, string> = {
-        singleEvents: singleEvents.toString(),
-        timeMin: timeMin.toISOString(),
-        timeMax: timeMax.toISOString(),
-        maxResults: `${maxResults}`,
-        orderBy,
-      };
+      // Změna: Pole pro uložení všech načtených událostí ze všech stránek
+      // deno-lint-ignore no-explicit-any
+      let allItems: any[] = [];
+      let pageToken: string | undefined = undefined;
 
-      const calendarRequestHeaders: Record<string, string> = {
-        Referer: "discord-events-sync",
-      };
+      do {
+        const calendarRequestParams: Record<string, string> = {
+          singleEvents: singleEvents.toString(),
+          timeMin: timeMin.toISOString(),
+          timeMax: timeMax.toISOString(),
+          maxResults: `${maxResults}`,
+          orderBy,
+        };
 
-      if (this.#serviceAccountKeyJson) {
-        const accessToken = await this.getAccessToken();
-        calendarRequestHeaders[
-          "Authorization"
-        ] = `${accessToken.token_type} ${accessToken.access_token}`;
-      } else if (this.#apiKey) {
-        calendarRequestParams["key"] = this.#apiKey;
-      }
+        // Pokud máme token pro další stránku, přidáme ho do požadavku
+        if (pageToken) {
+          calendarRequestParams.pageToken = pageToken;
+        }
 
-      const calendarResponse = await fetch(
-        `${API_BASE_URL}/calendars/${this.#calendarId}/events?${new URLSearchParams(calendarRequestParams).toString()}`,
-        { headers: calendarRequestHeaders },
-      );
-      if (!calendarResponse.ok) {
-        throw new Error(
-          `Error getting events from Google Calendar API. Status: ${calendarResponse.status}. Response: ${await calendarResponse
-            .text()}`,
+        const calendarRequestHeaders: Record<string, string> = {
+          Referer: "discord-events-sync",
+        };
+
+        if (this.#serviceAccountKeyJson) {
+          const accessToken = await this.getAccessToken();
+          calendarRequestHeaders[
+            "Authorization"
+          ] = `${accessToken.token_type} ${accessToken.access_token}`;
+        } else if (this.#apiKey) {
+          calendarRequestParams["key"] = this.#apiKey;
+        }
+
+        const calendarResponse = await fetch(
+          `${API_BASE_URL}/calendars/${this.#calendarId}/events?${new URLSearchParams(calendarRequestParams).toString()}`,
+          { headers: calendarRequestHeaders },
         );
-      }
-      const parsed = await calendarResponse.json();
-      return parsed;
+
+        if (!calendarResponse.ok) {
+          throw new Error(
+            `Error getting events from Google Calendar API. Status: ${calendarResponse.status}. Response: ${await calendarResponse
+              .text()}`,
+          );
+        }
+        const parsed = await calendarResponse.json();
+        
+        // Přidáme načtené položky k celkovému seznamu
+        if (parsed.items) {
+          allItems = allItems.concat(parsed.items);
+        }
+        // Uložíme si token pro další stránku (pokud existuje)
+        pageToken = parsed.nextPageToken;
+
+      } while (pageToken); // Opakujeme, dokud Google posílá další stránky
+
+      return { items: allItems };
     } catch (e) {
       console.error(`Error getting events from Google Calendar API.`);
       throw e;
     }
   }
-}
