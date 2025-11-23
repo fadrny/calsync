@@ -112,7 +112,7 @@ const calendarToDiscordEvent = (
       }
       break;
   }
-  const description: string = `${calEvent.description ?? ""}\nCalendar event link: ${calEvent.htmlLink}`.trim();
+  const description: string = `${calEvent.description ?? ""}\nOdkaz na google kalendář: ${calEvent.htmlLink}`.trim();
 
   const discordEventData: CreateEventRequestData | PatchEventRequestData = {
     name: calEvent.summary,
