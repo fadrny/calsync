@@ -184,3 +184,4 @@ public async getEvents({
       throw e;
     }
   }
+}
