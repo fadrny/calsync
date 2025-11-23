@@ -11,7 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     name: 🔁 Sync Events
     steps:
-      - uses: acm-uic/calsync@main
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        
+      - uses: ./
         with:
           discord-guild-id: ${{ secrets.DISCORD_EVENTS_SYNC_DISCORD_GUILD_ID }}
           discord-bot-token: ${{ secrets.DISCORD_EVENTS_SYNC_DISCORD_BOT_TOKEN }}
